@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Body Recomposition Coach</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://images.unsplash.com/photo-1549923746-bfdac6c79f97') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      padding: 40px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 600px;
+      height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 1s forwards;
+    }
+    @keyframes slideUp {
+      0% { transform: translateY(100px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+      font-size: 2.5em;
+      animation: fadeIn 1s forwards;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    label {
+      margin-top: 15px;
+      display: block;
+      font-weight: bold;
+      color: #333;
+      opacity: 0;
+      animation: fadeInLabel 1s forwards;
+    }
+    @keyframes fadeInLabel {
+      to { opacity: 1; }
+    }
+    input[type="number"], select, input[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      opacity: 0;
+      animation: inputFadeUp 0.8s forwards;
+    }
+    @keyframes inputFadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transform: scale(1.05);
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    input[type="submit"]:hover {
+      background-color: #45a049;
+      transform: scale(1.1);
+    }
+    .result, .plan {
+      background: #f9f9f9;
+      border-left: 5px solid #4CAF50;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+      opacity: 0;
+      animation: fadeInUp 0.8s forwards;
+    }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result h3, .plan h3 {
+      color: #4CAF50;
+    }
+    .result p, .plan p {
+      font-size: 16px;
+      color: #333;
+    }
+    .result ul, .plan ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .result ul li, .plan ul li {
+      background: #e8f5e9;
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      animation: scaleUp 0.5s forwards;
+    }
+    @keyframes scaleUp {
+      to { transform: scale(1); }
+    }
+    .health-status {
+      font-size: 16px;
+      color: #ff5722;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Body Recomposition Coach</h1>
+  <form id="coachForm">
+    <label for="gender">Gender:</label>
+    <select id="gender" required>
+      <option value="">Select</option>
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+    </select>
+
+    <label for="age">Age:</label>
+    <input type="number" id="age" required placeholder="Enter your age">
+
+    <label for="height">Height (in cm):</label>
+    <input type="number" id="height" required>
+
+    <label for="weight">Weight (in kg):</label>
+    <input type="number" id="weight" required>
+
+    <label for="waist">Waist circumference (cm):</label>
+    <input type="number" id="waist" required>
+
+    <label for="neck">Neck circumference (cm):</label>
+    <input type="number" id="neck" required>
+
+    <div id="hipField" style="display:none;">
+      <label for="hip">Hip circumference (cm):</label>
+      <input type="number" id="hip">
+    </div>
+
+    <input type="submit" value="Analyze My Body">
+  </form>
+
+  <div id="result" class="result" style="display:none;">
+    <h3>Your Stats</h3>
+    <p><strong>BMI:</strong> <span id="bmiValue"></span></p>
+    <p><strong>Body Fat %:</strong> <span id="bodyFat"></span></p>
+    <p><strong>Suggested Goal:</strong> <span id="goalSuggest"></span></p>
+    <p class="health-status" id="healthStatus"></p>
+  </div>
+
+  <div id="plan" class="plan" style="display:none;">
+    <h3>Your Full 5-Day Workout Plan</h3>
+    <ul id="workoutList"></ul>
+    <h3>Your Diet Plan</h3>
+    <p id="dietText"></p>
+  </div>
+</div>
+
+<script>
+  const coachForm = document.getElementById('coachForm');
+  const genderSelect = document.getElementById('gender');
+  const hipField = document.getElementById('hipField');
+
+  genderSelect.addEventListener('change', () => {
+    hipField.style.display = genderSelect.value === 'female' ? 'block' : 'none';
+  });
+
+  coachForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    let gender = document.getElementById('gender').value;
+    let age = parseFloat(document.getElementById('age').value);
+    let height = parseFloat(document.getElementById('height').value);
+    let weight = parseFloat(document.getElementById('weight').value);
+    let waist = parseFloat(document.getElementById('waist').value);
+    let neck = parseFloat(document.getElementById('neck').value);
+    let hip = gender === 'female' ? parseFloat(document.getElementById('hip').value) : 0;
+
+    // BMI Calculation
+    let heightM = height / 100;
+    let bmi = weight / (heightM * heightM);
+
+    // Body fat % using Navy Method
+    let bodyFat = 0;
+    if (gender === 'male') {
+      bodyFat = 495 / (1.0324 - 0.19077 * Math.log10(waist - neck) +
+        0.15456 * Math.log10(height)) - 450;
+    } else {
+      bodyFat = 495 / (1.29579 - 0.35004 * Math.log10(waist + hip - neck) +
+        0.22100 * Math.log10(height)) - 450;
+    }
+
+    bodyFat = bodyFat.toFixed(2);
+    bmi = bmi.toFixed(1);
+
+    // Health Status
+    let healthStatus = "";
+    if (bmi < 18.5) {
+      healthStatus = "You are underweight. Aim to gain some muscle mass.";
+    } else if (bmi >= 18.5 && bmi < 24.9) {
+      healthStatus = "You are in a healthy weight range. Keep it up!";
+    } else {
+      healthStatus = "You are overweight. Consider losing some body fat.";
+    }
+
+    // Goal suggestion
+    let targetFat = gender === 'male' ? 15 : 22;
+    let fatKg = (bodyFat / 100) * weight;
+    let leanKg = weight - fatKg;
+    let idealWeight = (leanKg / (1 - targetFat / 100)).toFixed(1);
+
+    let goalMsg = `To reach ${targetFat}% body fat, your estimated target weight is ${idealWeight} kg`;
+
+    // Full 5-Day Workout Plan with specific exercises, sets, and reps
+    const workouts = [
+      { day: "Day 1", title: "Full Body Mobility + Core", exercises: [
+        "Planks (3 sets of 45 seconds)",
+        "Glute Bridges (3 sets of 15 reps)",
+        "Bird Dogs (3 sets of 15 reps per side)"
+      ]},
+      { day: "Day 2", title: "Upper Body Strength", exercises: [
+        "Pushups (4 sets of 12 reps)",
+        "Dips (3 sets of 10 reps)",
+        "Shoulder Taps (3 sets of 20 reps)"
+      ]},
+      { day: "Day 3", title: "Cardio HIIT", exercises: [
+        "Jumping Jacks (4 sets of 30 seconds)",
+        "High Knees (3 sets of 30 seconds)",
+        "Burpees (3 sets of 10 reps)"
+      ]},
+      { day: "Day 4", title: "Lower Body Strength", exercises: [
+        "Squats (4 sets of 12 reps)",
+        "Lunges (3 sets of 12 reps per leg)",
+        "Calf Raises (4 sets of 15 reps)"
+      ]},
+      { day: "Day 5", title: "Stretch & Recovery", exercises: [
+        "Light Yoga (30 minutes)",
+        "Foam Rolling (10 minutes)"
+      ]}
+    ];
+
+    let workoutList = document.getElementById('workoutList');
+    workoutList.innerHTML = "";
+    workouts.forEach(w => {
+      let li = document.createElement('li');
+      li.innerHTML = `<strong>${w.day}: ${w.title}</strong><ul>`;
+      w.exercises.forEach(ex => {
+        li.innerHTML += `<li>${ex}</li>`;
+      });
+      li.innerHTML += `</ul>`;
+      workoutList.appendChild(li);
+    });
+
+    // Show results
+    document.getElementById('bmiValue').textContent = bmi;
+    document.getElementById('bodyFat').textContent = bodyFat;
+    document.getElementById('goalSuggest').textContent = goalMsg;
+    document.getElementById('healthStatus').textContent = healthStatus;
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('plan').style.display = 'block';
+  });
+</script>
+
+</body>
+</html>
